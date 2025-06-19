@@ -1,0 +1,41 @@
+# Python virtual environment
+backend/venv/
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Pip and pip-tools lock files (keep only the `.txt`)
+*.log
+
+# Jupyter Notebook checkpoints (if any)
+.ipynb_checkpoints/
+
+# dotenv files
+.env
+*.env
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.swp
+
+# OS / file system junk
+.DS_Store
+Thumbs.db
+
+# Node.js (frontend)
+frontend/node_modules/
+frontend/.parcel-cache/
+frontend/dist/
+
+# Docker
+**/.docker/
+docker-compose.override.yml
