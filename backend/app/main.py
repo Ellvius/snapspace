@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import environment
+from app.routes import environment, admin
 
 app = FastAPI(title="SnapSpace")
 
@@ -12,6 +12,7 @@ app.add_middleware(
 )
 
 app.include_router(environment.router)
+app.include_router(admin.router)
 
 @app.get('/')
 def read_root():
