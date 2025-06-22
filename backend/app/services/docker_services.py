@@ -1,12 +1,15 @@
+import docker
 import docker.errors
 from app.core.docker_config import client
-import docker
+from app.utils.unused_port import get_host_port
 
 def run_container(image: str):
+    HOST_PORT = get_host_port()
     try:
         container = client.containers.run(
             image=image,
             detach=True,
+            ports={f"8080/tcp":HOST_PORT},
             tty=True
         )
         return {
@@ -14,8 +17,10 @@ def run_container(image: str):
             "container": {
                 "id": container.id,
                 "short_id": container.short_id,
-                "name": container.name
-            }
+                "name": container.name,
+                "host_port": HOST_PORT,
+            },
+            "url": f"http://localhost:{HOST_PORT}",
         }
     except docker.errors.ImageNotFound:
         return {
