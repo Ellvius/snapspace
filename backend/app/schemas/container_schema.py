@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 class ContainerInput(BaseModel):
     image: str
-    
+    subdomain: str
     
 class ContainerInfo(BaseModel):
     id: str

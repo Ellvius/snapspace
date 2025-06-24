@@ -4,7 +4,7 @@ from app.core.docker_config import client
 
 
 # Create a container in an isolated network
-def create_container(image_name: str, network_name: str):
+def create_container(image_name: str, network_name: str, subdomain: str, internal_port: int = 8080):
     try:
         # Create isolated network
         # client.networks.create(network_name, driver="bridge")
@@ -12,9 +12,15 @@ def create_container(image_name: str, network_name: str):
         container = client.containers.run(
             image=image_name,
             detach=True,
-            ports={},   # no host binding (reverse proxy will handle)
+            ports={},  
             tty=True,
-            network=network_name
+            network=network_name,
+            labels={
+                "traefik.enable": "true",
+                f"traefik.http.routers.{subdomain}.rule": f"Host(`{subdomain}.localhost`)",
+                f"traefik.http.services.{subdomain}.loadbalancer.server.port": str(internal_port),
+                "traefik.docker.network": network_name
+            }
         )
         return {
             "status": "success",
@@ -25,6 +31,7 @@ def create_container(image_name: str, network_name: str):
                 "image": image_name,
                 "container_network": network_name,
             },
+            "url": f"http://{subdomain}.localhost"
         }
     except docker.errors.ImageNotFound:
         return {

@@ -1,0 +1,15 @@
+api:
+  dashboard: true
+  insecure: true  # Required for dashboard access on port 8080
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: "snapspace-net"  # Important to specify the network
+    watch: true  # Enable dynamic updates
+    swarmMode: false  # Disable if not using Swarm
