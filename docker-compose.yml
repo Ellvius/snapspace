@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+    backend:
+        build: ./backend
+        container_name: snapspace-backend
+        working_dir: /app/backend
+        volumes:
+            - .:/app
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            - snapspace-net
+
+    nginx:
+        image: nginx:latest
+        container_name: snapspace-nginx
+        ports:
+            - "80:80"
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+        networks:
+            - snapspace-net
+
+networks:
+    snapspace-net:
+        driver: bridge
+        name: snapspace-net

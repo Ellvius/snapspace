@@ -1,19 +1,20 @@
 import docker
 import docker.errors
 from app.core.docker_config import client
-from app.utils.unused_port import get_host_port
 
 
 # Create a container in an isolated network
-def create_container(image_name: str):
+def create_container(image_name: str, network_name: str):
     try:
-        HOST_PORT = get_host_port()
+        # Create isolated network
+        # client.networks.create(network_name, driver="bridge")
         
         container = client.containers.run(
             image=image_name,
             detach=True,
-            ports={"8080/tcp":HOST_PORT},   
+            ports={},   # no host binding (reverse proxy will handle)
             tty=True,
+            network=network_name
         )
         return {
             "status": "success",
@@ -21,9 +22,9 @@ def create_container(image_name: str):
                 "id": container.id,
                 "short_id": container.short_id,
                 "name": container.name,
-                "image": image_name
+                "image": image_name,
+                "container_network": network_name,
             },
-            "url": f"http://localhost:{HOST_PORT}"
         }
     except docker.errors.ImageNotFound:
         return {

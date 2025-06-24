@@ -2,7 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import environment, admin
 
-app = FastAPI(title="SnapSpace")
+app = FastAPI(
+    title="SnapSpace",
+    root_path="/api"
+)
 
 app.add_middleware(
     CORSMiddleware,
