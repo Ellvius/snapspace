@@ -2,7 +2,7 @@ import docker
 import docker.errors
 from app.core.docker_config import client
 from app.config.resource_profiles import resource_profiles
-from app.schemas.resource_profile_enum import ResourceProfile
+from app.schemas.resource_profiles import ResourceProfile
 
 
 # Create a container in an isolated network
@@ -73,28 +73,7 @@ def list_containers(all: bool = True):
             "status": "error",
             "message": f"Failed to list containers: {str(e)}"
         }
-
-
-# Stop a running container by ID
-def stop_container(container_id: str):
-    try:
-        container = client.containers.get(container_id)
-        container.stop()
-        return {
-            "status": "success",
-            "message": f"Container '{container.name}' stopped successfully"
-        }
-    except docker.errors.NotFound:
-        return {
-            "status": "error",
-            "message": f"No container found with ID '{container_id}'"
-        }
-    except docker.errors.APIError as e:
-        return {
-            "status": "error",
-            "message": f"Failed to stop container: {str(e)}"
-        }
-        
+                
         
 # Remove a container by ID (stops first if running)
 def remove_container(container_id: str):
@@ -117,6 +96,51 @@ def remove_container(container_id: str):
         }
 
 
+# Pause a container by ID 
+def pause_container(container_id: str):
+    try:
+        container = client.containers.get(container_id)
+        container.pause()
+        return {
+            "status": "success",
+            "message": f"Container '{container.name}' paused successfully"
+        }
+    except docker.errors.NotFound:
+        return {"status": "error", "message": f"Container '{container_id}' not found"}
+    except docker.errors.APIError as e:
+        return {"status": "error", "message": f"Failed to pause container: {str(e)}"}
+
+
+# Unpause a container by ID 
+def unpause_container(container_id: str):
+    try:
+        container = client.containers.get(container_id)
+        container.unpause()
+        return {
+            "status": "success",
+            "message": f"Container '{container.name}' unpaused successfully"
+        }
+    except docker.errors.NotFound:
+        return {"status": "error", "message": f"Container '{container_id}' not found"}
+    except docker.errors.APIError as e:
+        return {"status": "error", "message": f"Failed to unpause container: {str(e)}"}
+
+
+# Stop a container by ID 
+def stop_container(container_id: str):
+    try:
+        container = client.containers.get(container_id)
+        container.stop()
+        return {
+            "status": "success",
+            "message": f"Container '{container.name}' stopped successfully"
+        }
+    except docker.errors.NotFound:
+        return {"status": "error", "message": f"Container '{container_id}' not found"}
+    except docker.errors.APIError as e:
+        return {"status": "error", "message": f"Failed to stop container: {str(e)}"}
+    
+    
 # Restart a container by ID
 def restart_container(container_id: str):
     try:

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.schemas.container_schema import ContainerInput, ContainerResponse, ContainerInfo
-from app.services.docker_services import (create_container, list_containers, restart_container, remove_container, get_container_logs)
+from app.schemas.container_action import  ContainerAction
+from app.services.docker_services import (create_container, list_containers, restart_container, stop_container, pause_container, unpause_container, remove_container, get_container_logs)
 from app.utils.dock_net import get_new_dock_net
 
 
@@ -24,11 +25,22 @@ def list_environments():
     return result["containers"]
 
 
-@router.put("/{container_id}", response_model=dict)
-def restart_environment(container_id: str):
-    result = restart_container(container_id)
+@router.post("/{container_id}/{action}")
+def control_container(container_id: str, action: ContainerAction):
+    match action:
+        case ContainerAction.PAUSE:
+            result = pause_container(container_id)
+        case ContainerAction.UNPAUSE:
+            result = unpause_container(container_id)
+        case ContainerAction.STOP:
+            result = stop_container(container_id)
+        case ContainerAction.RESTART:
+            result = restart_container(container_id)
+        case _:
+            raise HTTPException(status_code=400, detail="Unsupported action")
+
     if result["status"] == "error":
-        raise HTTPException(status_code=404, detail=result["message"])
+        raise HTTPException(status_code=400, detail=result["message"])
     return result
 
 

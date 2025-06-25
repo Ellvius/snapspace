@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from app.schemas.resource_profile_enum import ResourceProfile
+from app.schemas.resource_profiles import ResourceProfile
 
 class ContainerInput(BaseModel):
     image: str
