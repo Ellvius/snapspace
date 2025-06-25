@@ -1,8 +1,13 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from app.schemas.resource_profile_enum import ResourceProfile
 
 class ContainerInput(BaseModel):
     image: str
     subdomain: str
+    profile: ResourceProfile = Field(
+        default=ResourceProfile.LOW,
+        description="Resource profile tier: low, medium, or high"
+    )
     
 class ContainerInfo(BaseModel):
     id: str

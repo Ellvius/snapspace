@@ -10,7 +10,7 @@ router = APIRouter(prefix="/environments", tags=["Development Environments"])
 @router.post("/", response_model=ContainerResponse)
 def create_environment(env : ContainerInput):
     env_network = get_new_dock_net()
-    result = create_container(env.image, env_network, env.subdomain)
+    result = create_container(image_name=env.image, network_name=env_network,subdomain=env.subdomain, profile=env.profile)
     if result["status"] == "error":
         raise HTTPException(status_code=400, detail=result["message"])
     return result

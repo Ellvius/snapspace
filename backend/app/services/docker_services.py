@@ -1,13 +1,16 @@
 import docker
 import docker.errors
 from app.core.docker_config import client
+from app.config.resource_profiles import resource_profiles
+from app.schemas.resource_profile_enum import ResourceProfile
 
 
 # Create a container in an isolated network
-def create_container(image_name: str, network_name: str, subdomain: str, internal_port: int = 8080):
+def create_container(image_name: str, network_name: str, subdomain: str, profile: ResourceProfile, internal_port: int = 8080):
     try:
         # Create isolated network
         # client.networks.create(network_name, driver="bridge")
+        limits = resource_profiles[profile.value]
         
         container = client.containers.run(
             image=image_name,
@@ -15,6 +18,9 @@ def create_container(image_name: str, network_name: str, subdomain: str, interna
             ports={},  
             tty=True,
             network=network_name,
+            mem_limit=limits["mem_limit"],              # Memory limit
+            nano_cpus=limits["nano_cpus"],              # CPU limit: 1.0 CPU (in nanoseconds)
+            pids_limit=limits["pids_limit"],            # Max processes
             labels={
                 "traefik.enable": "true",
                 f"traefik.http.routers.{subdomain}.rule": f"Host(`{subdomain}.localhost`)",
