@@ -1,38 +1,35 @@
-FROM node:18-slim
+# Node.js-specific stage
+FROM node:18-slim AS node-runtime
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    gnupg \
-    sudo \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# Install code-server (VS Code in browser)
-RUN curl -fsSL https://code-server.dev/install.sh | sh
+# Copy from builder
+COPY --from=builder /usr/bin/code-server /usr/bin/code-server
+COPY --from=builder /usr/lib/code-server /usr/lib/code-server
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash --groups sudo coder && \
     echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Install essential global npm packages
-RUN npm install -g \
-    nodemon \
-    typescript \
-    ts-node
+# Install global npm packages
+RUN npm install -g nodemon typescript ts-node
 
 # Switch to non-root user
 USER coder
 WORKDIR /home/coder/workspace
 
-# Copy sample files into the workspace directory
+# Copy startup files
 COPY --chown=coder:coder sample/ /home/coder/workspace/
-
-# Copy and set up entrypoint script
 COPY --chown=coder:coder entrypoint.sh /home/coder/
 RUN chmod +x /home/coder/entrypoint.sh
 
 # Expose ports
 EXPOSE 8080 3000 5000
 
-# Set the entrypoint
-ENTRYPOINT ["/home/coder/entrypoint.sh"]
+# Set entrypoint
+ENTRYPOINT [ "/home/coder/entrypoint.sh" ]

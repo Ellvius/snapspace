@@ -11,7 +11,7 @@ def build_all_templates(template_root: str = "templates"):
         if dir_entry.is_dir():
             dockerfile_path = os.path.join(dir_entry.path, "Dockerfile")
             if os.path.isfile(dockerfile_path):
-                image_tag = f"{dir_entry.name}-env"
+                image_tag = f"{dir_entry.name}"
                 logs.append(f"🔧 Building image: {image_tag}")
 
                 try:

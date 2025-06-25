@@ -1,18 +1,20 @@
-FROM python:3.11-slim
+# Python-specific stage
+FROM python:3.11-slim AS python-runtime
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    build-essential \
-    sudo \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# Install code-server
-RUN curl -fsSL https://code-server.dev/install.sh | sh
+# Copy from builder
+COPY --from=builder /usr/bin/code-server /usr/bin/code-server
+COPY --from=builder /usr/lib/code-server /usr/lib/code-server
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash --groups sudo coder && \
@@ -30,10 +32,8 @@ RUN pip install --no-cache-dir \
 USER coder
 WORKDIR /home/coder/workspace
 
-# Copy sample files into the workspace directory
+# Copy startup files
 COPY --chown=coder:coder sample/ /home/coder/workspace/
-
-# Copy and set up entrypoint script
 COPY --chown=coder:coder entrypoint.sh /home/coder/
 RUN chmod +x /home/coder/entrypoint.sh
 
