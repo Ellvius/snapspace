@@ -1,33 +1,65 @@
 version: '3.8'
 
 services:
-    backend:
-        build: ./backend
-        container_name: snapspace-backend
-        working_dir: /app/backend
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
-            - "traefik.http.services.backend.loadbalancer.server.port=8000"
-            - "traefik.http.routers.backend.entrypoints=web"
-        volumes:
-            - .:/app
-            - /var/run/docker.sock:/var/run/docker.sock
-        networks:
-            - snapspace-net
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: snapspace-backend
+    working_dir: /app/backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      - "traefik.http.routers.backend.entrypoints=web"
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file:
+      - .env  # Externalize environment variables
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - snapspace-net
+    restart: unless-stopped
 
-    traefik:
-        image: traefik:v2.11
-        container_name: snapspace-traefik
-        ports:
-            - "80:80"
-            - "8080:8080" # Dashboard
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-            - ./traefik/traefik.yml:/etc/traefik/traefik.yml
-        networks:
-            - snapspace-net
+  db:
+    image: postgres:15-alpine
+    container_name: snapspace-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-mydatabase}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user} -d ${DB_NAME:-mydatabase}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - snapspace-net
+    restart: unless-stopped
+
+  traefik:
+    image: traefik:v2.11
+    container_name: snapspace-traefik
+    ports:
+      - "80:80"
+      - "8080:8080" # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml
+    networks:
+      - snapspace-net
+    restart: unless-stopped
 
 networks:
-    snapspace-net:
-        name: snapspace-net
+  snapspace-net:
+    driver: bridge
+    name: snapspace-net
+
+volumes:
+  postgres_data:
+    name: snapspace-data
