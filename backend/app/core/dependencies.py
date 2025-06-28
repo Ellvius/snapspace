@@ -1,6 +1,9 @@
-from app.core.db import AsyncSessionLocal
+from app.core.db import SessionLocal
 
 # Dependency to provide a database session in FastAPI routes
-async def get_db():
-    async with AsyncSessionLocal() as session:
-        yield session       # Yields a session for use in a request lifecycle
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db  # Synchronous generator
+    finally:
+        db.close()

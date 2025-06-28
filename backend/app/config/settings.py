@@ -4,7 +4,7 @@ from app.utils.paths import BASE_DIR
 # Define a Settings class that extends BaseSettings for structured configuration
 class Settings(BaseSettings):
     # Core DB config loaded from .env
-    DATABASE_URL: str = "postgresql+asyncpg://user:password@db:5432/mydatabase"
+    DATABASE_URL: str = "postgresql+psycopg2://user:password@db:5432/mydatabase"
     DEBUG: bool = False
 
     class Config:
