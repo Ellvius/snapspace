@@ -3,7 +3,8 @@ from app.schemas.container_schema import ContainerInput, ContainerResponse, Cont
 from app.schemas.container_action import  ContainerAction
 from app.services.docker.container_service import (create_container, list_containers, restart_container, stop_container, pause_container, unpause_container, remove_container, get_container_logs)
 from app.models.users import User
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, required_roles
+from app.schemas.user_schema import UserRoles
 from app.utils.dock_net import get_new_dock_net
 
 
@@ -29,7 +30,7 @@ def create_environment(env : ContainerInput, user: User = Depends(get_current_us
 
 
 @router.get("/", response_model=list[ContainerInfo])
-def list_environments(user: User = Depends(get_current_user)):
+def list_environments(user: User = Depends(required_roles(UserRoles.ADMIN))):
     result = list_containers()
     if isinstance(result, dict) and result["status"] == "error":
         raise HTTPException(

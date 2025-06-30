@@ -22,8 +22,9 @@ def get_user_by_username(username: str, db: Session) -> User | None:
     user = result.scalar_one_or_none()
     return user
 
-def get_user_by_id(user_id: str, db: Session) -> User | None:
-    return db.query(User).filter(User.id == user_id).first()
+def get_user_by_id(user_id: str, db: Session) -> UserOut | None:
+    user = db.query(User).filter(User.id == user_id).first()
+    return UserOut.model_validate(user)
 
 
 def get_all_users(db: Session) -> list[UserOut]:
