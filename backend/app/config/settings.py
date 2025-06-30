@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     PROJECT_TITLE: str = "snapspace"
     API_ROOT: str = "/api"
     
+    # Admin Credentials
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "1234"
+    
     # Core DB config loaded from .env
     DATABASE_URL: str = "postgresql+psycopg2://user:password@db:5432/mydatabase"
     DEBUG: bool = False

@@ -1,17 +1,32 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from app.routes import environment, admin, user, auth
 from app.core.db import Base, engine
 from app.config.settings import settings
+from app.core.admin_setup import create_admin
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        Base.metadata.create_all(bind=engine)
+        create_admin()
+    except Exception as e:
+        print(f" Startup failed: {e}")
+        raise
+    else:
+        print("Tables created and admin check done.")
+    yield
+    print("Application shutdown")
+
 
 # Initialize the Fastapi App with lifespan management
 app = FastAPI(
     title=settings.PROJECT_TITLE,
-    root_path=settings.API_ROOT
+    root_path=settings.API_ROOT,
+    lifespan=lifespan
 )
 
-# Creates all tables defined in ORM models
-Base.metadata.create_all(bind=engine)
 
 # Enable CORS (Cross-Origin Resource Sharing) for all origins, methods, and headers
 app.add_middleware(
