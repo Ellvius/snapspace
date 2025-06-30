@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException
-from app.core.image_builder import build_all_templates
+from fastapi import APIRouter, HTTPException, status
+from app.services.docker.image_service import build_all_templates
 from app.utils.paths import TEMPLATE_DIR
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -14,5 +14,8 @@ def build_images():
             "built_images": images 
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Build failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Build failed: {e}"
+        )
         

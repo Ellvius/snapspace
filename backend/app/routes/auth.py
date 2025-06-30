@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.schemas.user_schema import UserCreate
@@ -13,7 +13,7 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     # Check if username already exists
     if get_user_by_username(user_data.username, db):
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered"
         )
     
@@ -23,7 +23,7 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         return create_user(user_data, db)
     except ValueError as e:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
 
@@ -37,13 +37,13 @@ def login_user(
     if not user:
         # Use same error for username/password to prevent user enumeration
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
         )
         
     if not verify_password(form_data.password, str(user.password)):
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
