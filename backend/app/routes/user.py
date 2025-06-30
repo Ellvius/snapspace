@@ -4,7 +4,7 @@ from app.models.users import User
 from app.core.dependencies import get_db, get_current_user
 from app.services.user_services import get_all_users
 
-router = APIRouter(prefix="/users", tags=["User"])    
+router = APIRouter(tags=["User"])    
     
 @router.get("/")
 def list_users(db: Session = Depends(get_db)):

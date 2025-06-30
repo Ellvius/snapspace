@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from app.services.docker.image_service import build_all_templates
 from app.utils.paths import TEMPLATE_DIR
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter(tags=["Admin"])
 
 @router.post("/build-images")
 def build_images():

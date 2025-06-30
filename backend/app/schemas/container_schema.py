@@ -1,8 +1,17 @@
 from pydantic import BaseModel, Field
+from enum import Enum
 from app.schemas.resource_profiles import ResourceProfile
 
+class Environments(str, Enum):
+    PYTHON = "python-env"
+    NODE = "nodejs-env"
+    
+
 class ContainerInput(BaseModel):
-    image: str
+    image: Environments = Field(
+        default=Environments.PYTHON,
+        description="Pre-configured development environments"
+    )
     subdomain: str
     profile: ResourceProfile = Field(
         default=ResourceProfile.LOW,

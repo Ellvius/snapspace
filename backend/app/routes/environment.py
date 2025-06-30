@@ -1,17 +1,25 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.schemas.container_schema import ContainerInput, ContainerResponse, ContainerInfo
 from app.schemas.container_action import  ContainerAction
 from app.services.docker.container_service import (create_container, list_containers, restart_container, stop_container, pause_container, unpause_container, remove_container, get_container_logs)
+from app.models.users import User
+from app.core.dependencies import get_current_user
 from app.utils.dock_net import get_new_dock_net
 
 
-router = APIRouter(prefix="/environments", tags=["Development Environments"])
+router = APIRouter(tags=["Development Environments"])
 
 
 @router.post("/", response_model=ContainerResponse)
-def create_environment(env : ContainerInput):
+def create_environment(env : ContainerInput, user: User = Depends(get_current_user)):
     env_network = get_new_dock_net()
-    result = create_container(image_name=env.image, network_name=env_network,subdomain=env.subdomain, profile=env.profile)
+    result = create_container(
+        image_name=env.image, 
+        network_name=env_network,
+        subdomain=env.subdomain, 
+        profile=env.profile
+    )
+    
     if result["status"] == "error":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
@@ -21,7 +29,7 @@ def create_environment(env : ContainerInput):
 
 
 @router.get("/", response_model=list[ContainerInfo])
-def list_environments():
+def list_environments(user: User = Depends(get_current_user)):
     result = list_containers()
     if isinstance(result, dict) and result["status"] == "error":
         raise HTTPException(
@@ -32,7 +40,11 @@ def list_environments():
 
 
 @router.post("/{container_id}/{action}")
-def control_environment(container_id: str, action: ContainerAction):
+def control_environment(
+    container_id: str, 
+    action: ContainerAction,
+    user: User = Depends(get_current_user)
+):
     match action:
         case ContainerAction.PAUSE:
             result = pause_container(container_id)
@@ -57,7 +69,7 @@ def control_environment(container_id: str, action: ContainerAction):
 
 
 @router.delete("/{container_id}", response_model=dict)
-def delete_environment(container_id: str):
+def delete_environment(container_id: str, user: User = Depends(get_current_user)):
     result = remove_container(container_id)
     if result["status"] == "error":
         raise HTTPException(
@@ -68,7 +80,11 @@ def delete_environment(container_id: str):
 
 
 @router.get("/{container_id}/logs", response_model=dict)
-def fetch_logs(container_id: str, tail: int = 100):
+def fetch_logs(
+    container_id: str, 
+    tail: int = 100, 
+    user: User = Depends(get_current_user)
+):
     result = get_container_logs(container_id, tail)
     if result["status"] == "error":
         raise HTTPException(

@@ -6,7 +6,7 @@ from app.core.dependencies import get_db
 from app.core.security import hash_password, verify_password, generate_auth_token
 from app.services.user_services import get_user_by_username, create_user
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(tags=["Authentication"])
 
 @router.post("/register")
 def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
