@@ -17,10 +17,13 @@ def create_user(user_data: UserCreate, db: Session) -> UserOut:
         raise ValueError("Username or email already exists")
 
 
-def get_user_by_username(username: str, db: Session) -> UserOut | None:
+def get_user_by_username(username: str, db: Session) -> User | None:
     result = db.execute(select(User).where(User.username == username))
     user = result.scalar_one_or_none()
-    return UserOut.model_validate(user) if user else None
+    return user
+
+def get_user_by_id(user_id: str, db: Session) -> User | None:
+    return db.query(User).filter(User.id == user_id).first()
 
 
 def get_all_users(db: Session) -> list[UserOut]:

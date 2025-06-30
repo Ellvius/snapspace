@@ -6,11 +6,17 @@ class Settings(BaseSettings):
     # Core DB config loaded from .env
     DATABASE_URL: str = "postgresql+psycopg2://user:password@db:5432/mydatabase"
     DEBUG: bool = False
+    
+    # JWT config 
+    JWT_SECRET: str = "secret"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRATION_HOURS: int = 6 
 
     class Config:
         # Load environment variables from .env file
         env_file = BASE_DIR / '.env'
         env_file_encoding = "utf-8"
+        extra = "forbid" # Raise error on extra fields in .env
 
 
 # Global settings instance

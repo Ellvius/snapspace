@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import environment, admin, user
+from app.routes import environment, admin, user, auth
 from app.core.db import Base, engine
 
 # Initialize the Fastapi App with lifespan management
@@ -21,6 +21,7 @@ app.add_middleware(
 )
 
 # Register route modules
+app.include_router(auth.router)
 app.include_router(environment.router)
 app.include_router(admin.router)
 app.include_router(user.router)
