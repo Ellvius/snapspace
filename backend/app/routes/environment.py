@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.schemas.user_schema import UserRoles, UserOut
 from app.utils.dock_net import get_new_dock_net
 from app.config.resource_profiles import resource_profiles
-from app.services.db.container_service import insert_container
+from app.services.db.container_service import insert_container, update_container_status
 from app.core.dependencies import get_db
 
 
@@ -65,7 +65,8 @@ def list_environments(user: UserOut = Depends(required_roles(UserRoles.ADMIN))):
 def control_environment(
     container_id: str, 
     action: ContainerAction,
-    user: UserOut = Depends(get_current_user)
+    user: UserOut = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     match action:
         case ContainerAction.PAUSE:
@@ -87,6 +88,8 @@ def control_environment(
             status_code=status.HTTP_400_BAD_REQUEST, 
             detail=result["message"]
         )
+        
+    res = update_container_status(action, container_id, db)
     return result
 
 

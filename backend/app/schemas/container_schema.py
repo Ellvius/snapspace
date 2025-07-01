@@ -43,10 +43,12 @@ class ContainerAction(str, Enum):
     
 
 class ContainerStatus(str, Enum):
+    CREATED = "created"
     RUNNING = "running"
-    STOPPED = "stopped"
     PAUSED = "paused"
-    EXPIRED = "expired"
+    RESTARTING = "restarting"
+    EXITED = "exited"
+    DEAD = "dead"
     
     
 # DATABASE CRUD SCHEMAS 

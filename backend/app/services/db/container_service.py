@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 from app.models.containers import Container
-from app.schemas.container_schema import ContainerInsert, ContainerData
+from app.schemas.container_schema import ContainerInsert, ContainerData, ContainerAction, ContainerStatus
 
 def insert_container(container_data: ContainerInsert, db: Session) -> ContainerData:
     new_container = Container(
@@ -14,12 +13,40 @@ def insert_container(container_data: ContainerInsert, db: Session) -> ContainerD
         url = container_data.url
     )
     
+    if not new_container:
+        raise ValueError("Could not create container in db")
+    
     try:
         db.add(new_container)
         db.commit()
         db.refresh(new_container)
         return  ContainerData.model_validate(new_container)
-    except IntegrityError as e:
+    except Exception as e:
         db.rollback()
-        raise ValueError(str(e))
+        raise ValueError(f"Failed to insert the container in db: {str(e)}")
 
+
+def update_container_status(action: ContainerAction, container_id: str, db: Session) -> ContainerData:
+    # Define the mapping from action to status
+    action_to_status = {
+        ContainerAction.UNPAUSE: ContainerStatus.RUNNING,
+        ContainerAction.RESTART: ContainerStatus.RUNNING,
+        ContainerAction.PAUSE: ContainerStatus.PAUSED,
+        ContainerAction.STOP: ContainerStatus.EXITED,
+    }
+
+    if action not in action_to_status:
+        raise ValueError("Invalid container action")
+
+    container = db.query(Container).filter(Container.container_id == container_id).first()
+    if not container:
+        raise ValueError("Container not found")
+
+    try:
+        container.status = action_to_status[action]
+        db.commit()
+        db.refresh(container)
+        return ContainerData.model_validate(container)
+    except Exception as e:
+        db.rollback()
+        raise ValueError(f"Failed to update status: {e}")
