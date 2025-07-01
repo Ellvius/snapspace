@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.schemas.user_schema import UserRoles, UserOut
 from app.utils.dock_net import get_new_dock_net
 from app.config.resource_profiles import resource_profiles
-from app.services.db.container_service import insert_container, update_container_status, delete_container
+from app.services.db.container_service import insert_container, update_container_status, delete_container, list_user_containers
 from app.core.dependencies import get_db
 
 
@@ -50,15 +50,21 @@ def create_environment(env : ContainerInput, user: UserOut = Depends(get_current
     return res
 
 
-@router.get("/", response_model=list[ContainerInfo])
-def list_environments(user: UserOut = Depends(required_roles(UserRoles.ADMIN))):
-    result = list_containers()
-    if isinstance(result, dict) and result["status"] == "error":
+@router.get("/", response_model=dict)
+def list_environments(user: UserOut = Depends(get_current_user), db: Session = Depends(get_db)):
+    try:
+        containers = list_user_containers(user.id, db)
+    except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=result["message"]
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
         )
-    return result["containers"]
+    
+    return {
+        "status": "success",
+        "message": "Containers fetched successfully",
+        "container": containers
+    }
 
 
 @router.post("/{container_id}/{action}")

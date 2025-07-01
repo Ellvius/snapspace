@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy.orm import Session
 from app.models.containers import Container
 from app.schemas.container_schema import ContainerInsert, ContainerData, ContainerAction, ContainerStatus
@@ -66,3 +67,16 @@ def delete_container(id: str, db: Session) -> ContainerData:
         raise ValueError(f"Failed to delete container: {e}")
     
     
+def list_user_containers(user_id: int, db: Session) -> List[ContainerData]:
+    try:
+        containers = (
+            db.query(Container)
+            .filter(Container.owner_id == user_id)
+            .all()
+        )
+        return [
+            ContainerData.model_validate(c) for c in containers
+        ]
+    except Exception as e:
+        db.rollback()
+        raise ValueError(f"Failed to fetch user containers: {e}")
