@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from app.schemas.container_schema import ContainerInput, ContainerResponse, ContainerInfo
-from app.schemas.container_action import  ContainerAction
+from app.schemas.container_schema import  ContainerAction
 from app.services.docker.container_service import (create_container, list_containers, restart_container, stop_container, pause_container, unpause_container, remove_container, get_container_logs)
 from app.models.users import User
 from app.core.dependencies import get_current_user, required_roles

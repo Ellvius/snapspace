@@ -32,3 +32,17 @@ class ContainerResponse(BaseModel):
     message: str | None = None
     container: ContainerInfo | None = None
     url: str | None = None
+    
+
+class ContainerAction(str, Enum):
+    PAUSE = "pause"
+    UNPAUSE = "unpause"
+    STOP = "stop"
+    RESTART = "restart"  
+    
+
+class ContainerStatus(str, Enum):
+    RUNNING = "running"
+    STOPPED = "stopped"
+    PAUSED = "paused"
+    EXPIRED = "expired"

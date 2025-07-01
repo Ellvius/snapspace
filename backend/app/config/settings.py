@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "secret"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_HOURS: int = 6 
+    
+    CONTAINER_LIFESPAN_HOURS: int = 3
 
     class Config:
         # Load environment variables from .env file
