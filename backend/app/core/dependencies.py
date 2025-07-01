@@ -5,7 +5,7 @@ from app.core.security import verify_token
 from app.core.db import SessionLocal
 from app.schemas.user_schema import UserRoles
 from app.models.users import User
-from app.services.user_services import get_user_by_id
+from app.services.db.user_services import get_user_by_id
 
 # Dependency to provide a database session in FastAPI routes
 def get_db():

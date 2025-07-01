@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
+from datetime import datetime
 from app.schemas.resource_profiles import ResourceProfile
 
 class Environments(str, Enum):
@@ -46,3 +47,27 @@ class ContainerStatus(str, Enum):
     STOPPED = "stopped"
     PAUSED = "paused"
     EXPIRED = "expired"
+    
+    
+# DATABASE CRUD SCHEMAS 
+    
+class BaseContainer(BaseModel):
+    container_id: str 
+    name: str
+    env: Environments
+    network: str
+    pids_limit: int | None = None
+    url: str
+
+class ContainerInsert(BaseContainer):
+    owner_id: int
+
+class ContainerData(BaseContainer):
+    id: int
+    status: ContainerStatus
+    created_at: datetime
+    updated_at: datetime
+    expire_at: datetime
+    owner_id: int
+
+    model_config = ConfigDict(from_attributes=True)

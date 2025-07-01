@@ -1,18 +1,20 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from app.schemas.container_schema import ContainerInput, ContainerResponse, ContainerInfo
-from app.schemas.container_schema import  ContainerAction
+from app.schemas.container_schema import ContainerInput, ContainerResponse, ContainerInfo, ContainerInsert, ContainerAction
 from app.services.docker.container_service import (create_container, list_containers, restart_container, stop_container, pause_container, unpause_container, remove_container, get_container_logs)
-from app.models.users import User
 from app.core.dependencies import get_current_user, required_roles
-from app.schemas.user_schema import UserRoles
+from sqlalchemy.orm import Session
+from app.schemas.user_schema import UserRoles, UserOut
 from app.utils.dock_net import get_new_dock_net
+from app.config.resource_profiles import resource_profiles
+from app.services.db.container_service import insert_container
+from app.core.dependencies import get_db
 
 
 router = APIRouter(tags=["Development Environments"])
 
 
 @router.post("/", response_model=ContainerResponse)
-def create_environment(env : ContainerInput, user: User = Depends(get_current_user)):
+def create_environment(env : ContainerInput, user: UserOut = Depends(get_current_user), db: Session = Depends(get_db)):
     env_network = get_new_dock_net()
     result = create_container(
         image_name=env.image, 
@@ -26,11 +28,30 @@ def create_environment(env : ContainerInput, user: User = Depends(get_current_us
             status_code=status.HTTP_400_BAD_REQUEST, 
             detail=result["message"]
         )
-    return result
+    
+    data = result["container"]
+    container_data = ContainerInsert(
+        container_id=data["short_id"], # type: ignore
+        name=data["name"], # type: ignore
+        env=data["image"],   # type: ignore
+        network=data["container_network"], # type: ignore
+        pids_limit= resource_profiles[env.profile.value]["pids_limit"],
+        owner_id=user.id,
+        url= result["url"]
+    )
+    
+    res = insert_container(container_data, db)
+
+    if res is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Error creating environment"
+        )
+    return res
 
 
 @router.get("/", response_model=list[ContainerInfo])
-def list_environments(user: User = Depends(required_roles(UserRoles.ADMIN))):
+def list_environments(user: UserOut = Depends(required_roles(UserRoles.ADMIN))):
     result = list_containers()
     if isinstance(result, dict) and result["status"] == "error":
         raise HTTPException(
@@ -44,7 +65,7 @@ def list_environments(user: User = Depends(required_roles(UserRoles.ADMIN))):
 def control_environment(
     container_id: str, 
     action: ContainerAction,
-    user: User = Depends(get_current_user)
+    user: UserOut = Depends(get_current_user)
 ):
     match action:
         case ContainerAction.PAUSE:
@@ -70,7 +91,7 @@ def control_environment(
 
 
 @router.delete("/{container_id}", response_model=dict)
-def delete_environment(container_id: str, user: User = Depends(get_current_user)):
+def delete_environment(container_id: str, user: UserOut = Depends(get_current_user)):
     result = remove_container(container_id)
     if result["status"] == "error":
         raise HTTPException(
@@ -84,7 +105,7 @@ def delete_environment(container_id: str, user: User = Depends(get_current_user)
 def fetch_logs(
     container_id: str, 
     tail: int = 100, 
-    user: User = Depends(get_current_user)
+    user: UserOut = Depends(get_current_user)
 ):
     result = get_container_logs(container_id, tail)
     if result["status"] == "error":

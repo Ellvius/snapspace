@@ -10,11 +10,13 @@ class Container(Base):
     __tablename__ = "containers"
     
     id = Column(Integer, primary_key=True, index=True)
+    container_id = Column(String, nullable=False, index=True)
     name = Column(String(100), nullable=False,unique=True, index=True)
     env = Column(SqlEnum(Environments), nullable=False)
     network = Column(String(100), nullable=False)
     status = Column(SqlEnum(ContainerStatus), nullable=False, default=ContainerStatus.RUNNING)
-    mem_limit = Column(Integer, nullable=False, default=512)
+    pids_limit = Column(Integer, nullable=False, default=100)
+    url = Column(String, nullable=False, unique=True)
     
     created_at = Column(
         TIMESTAMP(timezone=True), 
