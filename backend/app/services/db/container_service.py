@@ -3,6 +3,10 @@ from sqlalchemy.orm import Session
 from app.models.containers import Container
 from app.schemas.container_schema import ContainerInsert, ContainerData, ContainerAction, ContainerStatus
 
+def get_container_by_id(container_id: str, db: Session) -> Container | None:
+    return db.query(Container).filter(Container.container_id == container_id).first()
+
+
 def insert_container(container_data: ContainerInsert, db: Session) -> ContainerData:
     new_container = Container(
         container_id = container_data.container_id,
@@ -39,7 +43,7 @@ def update_container_status(action: ContainerAction, container_id: str, db: Sess
     if action not in action_to_status:
         raise ValueError("Invalid container action")
 
-    container = db.query(Container).filter(Container.container_id == container_id).first()
+    container = get_container_by_id(container_id, db)
     if not container:
         raise ValueError("Container not found")
 
@@ -54,7 +58,7 @@ def update_container_status(action: ContainerAction, container_id: str, db: Sess
 
 
 def delete_container(id: str, db: Session) -> ContainerData:
-    container = db.query(Container).filter(Container.container_id == id).first()
+    container = get_container_by_id(id, db)
     if not container:
         raise ValueError("Container not found")
 
@@ -80,3 +84,13 @@ def list_user_containers(user_id: int, db: Session) -> List[ContainerData]:
     except Exception as e:
         db.rollback()
         raise ValueError(f"Failed to fetch user containers: {e}")
+    
+    
+
+def verify_container_access(container_id: str, user_id: int, db: Session) -> Container:
+    container = get_container_by_id(container_id, db)
+    if not container:
+        raise ValueError("Container not found")
+    if container.owner_id != user_id:
+        raise PermissionError("User does not own this container")
+    return container

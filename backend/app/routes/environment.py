@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.schemas.user_schema import UserRoles, UserOut
 from app.utils.dock_net import get_new_dock_net
 from app.config.resource_profiles import resource_profiles
-from app.services.db.container_service import insert_container, update_container_status, delete_container, list_user_containers
+from app.services.db.container_service import insert_container, update_container_status, delete_container, list_user_containers, verify_container_access
 from app.core.dependencies import get_db
 
 
@@ -74,6 +74,19 @@ def control_environment(
     user: UserOut = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    try:
+        res = verify_container_access(container_id, user.id, db)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+        
     match action:
         case ContainerAction.PAUSE:
             result = pause_container(container_id)
@@ -105,6 +118,18 @@ def delete_environment(
     user: UserOut = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    try:
+        res = verify_container_access(container_id, user.id, db)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
     # First, remove the actual Docker container
     result = remove_container(container_id)
     if result["status"] == "error":
@@ -133,8 +158,22 @@ def delete_environment(
 def fetch_logs(
     container_id: str, 
     tail: int = 100, 
-    user: UserOut = Depends(get_current_user)
+    user: UserOut = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
+    try:
+        container = verify_container_access(container_id, user.id, db)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+        
     result = get_container_logs(container_id, tail)
     if result["status"] == "error":
         raise HTTPException(
