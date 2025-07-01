@@ -50,3 +50,19 @@ def update_container_status(action: ContainerAction, container_id: str, db: Sess
     except Exception as e:
         db.rollback()
         raise ValueError(f"Failed to update status: {e}")
+
+
+def delete_container(id: str, db: Session) -> ContainerData:
+    container = db.query(Container).filter(Container.container_id == id).first()
+    if not container:
+        raise ValueError("Container not found")
+
+    try:
+        db.delete(container)
+        db.commit()
+        return ContainerData.model_validate(container)
+    except Exception as e:
+        db.rollback()
+        raise ValueError(f"Failed to delete container: {e}")
+    
+    

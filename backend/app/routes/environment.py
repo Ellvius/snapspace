@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.schemas.user_schema import UserRoles, UserOut
 from app.utils.dock_net import get_new_dock_net
 from app.config.resource_profiles import resource_profiles
-from app.services.db.container_service import insert_container, update_container_status
+from app.services.db.container_service import insert_container, update_container_status, delete_container
 from app.core.dependencies import get_db
 
 
@@ -93,15 +93,34 @@ def control_environment(
     return result
 
 
-@router.delete("/{container_id}", response_model=dict)
-def delete_environment(container_id: str, user: UserOut = Depends(get_current_user)):
+@router.delete("/{container_id}", response_model=dict, status_code=status.HTTP_200_OK)
+def delete_environment(
+    container_id: str,
+    user: UserOut = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # First, remove the actual Docker container
     result = remove_container(container_id)
     if result["status"] == "error":
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=result["message"]
         )
-    return result
+
+    # Then, delete the container record from the database
+    try:
+        container = delete_container(container_id, db)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+    return {
+        "status": "success",
+        "message": f"Container '{container_id}' deleted successfully",
+        "container": container
+    }
 
 
 @router.get("/{container_id}/logs", response_model=dict)
