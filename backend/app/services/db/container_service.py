@@ -106,3 +106,22 @@ def enforce_pid_limit(user_id: int, new_pids: int, db: Session):
     
     if current_total + new_pids > settings.MAX_PIDS:
         raise ValueError(f"PID limit exceeded. Current: {current_total}, Requested: {new_pids}, Max: {settings.MAX_PIDS}, Try deleting existing environments.")
+    
+
+def get_container_info(container_id: str, db: Session) -> ContainerData | None:
+    container = get_container_by_id(container_id, db)
+    if not container:
+        raise ValueError("Container not found")
+    
+    return ContainerData.model_validate(container)
+
+
+def get_all_containers(db: Session) -> List[ContainerData]:
+    try:
+        containers = db.query(Container).order_by(Container.created_at.desc()).all()
+        return [
+            ContainerData.model_validate(c) for c in containers
+        ]
+    except Exception as e:
+        db.rollback()
+        raise ValueError(f"Failed to fetch containers: {e}")
