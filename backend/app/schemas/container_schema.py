@@ -13,7 +13,6 @@ class ContainerInput(BaseModel):
         default=Environments.PYTHON,
         description="Pre-configured development environments"
     )
-    subdomain: str
     profile: ResourceProfile = Field(
         default=ResourceProfile.LOW,
         description="Resource profile tier: low, medium, or high"

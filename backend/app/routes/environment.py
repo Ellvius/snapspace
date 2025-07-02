@@ -5,6 +5,7 @@ from app.core.dependencies import get_current_user, required_roles
 from sqlalchemy.orm import Session
 from app.schemas.user_schema import UserRoles, UserOut
 from app.utils.dock_net import get_new_dock_net
+from app.utils.generate_name import generate_container_name, generate_unique_suffix
 from app.config.resource_profiles import resource_profiles
 from app.services.db.container_service import insert_container, update_container_status, delete_container, list_user_containers, verify_container_access, enforce_pid_limit
 from app.core.dependencies import get_db
@@ -31,10 +32,14 @@ def create_environment(
 
      # Create Docker container
     env_network = get_new_dock_net()
+    container_name = generate_container_name()
+    unique_hash = generate_unique_suffix()
+    
     result = create_container(
+        container_name=container_name,
         image_name=env.image, 
         network_name=env_network,
-        subdomain=env.subdomain, 
+        subdomain=f"{container_name}-{unique_hash}", 
         profile=env.profile
     )
 

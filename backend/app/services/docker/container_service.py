@@ -6,13 +6,14 @@ from app.schemas.resource_profiles import ResourceProfile
 
 
 # Create a container in an isolated network
-def create_container(image_name: str, network_name: str, subdomain: str, profile: ResourceProfile, internal_port: int = 8080):
+def create_container(container_name: str, image_name: str, network_name: str, subdomain: str, profile: ResourceProfile, internal_port: int = 8080):
     try:
         # Create isolated network
         # client.networks.create(network_name, driver="bridge")
         limits = resource_profiles[profile.value]
         
         container = client.containers.run(
+            name=container_name,
             image=image_name,
             detach=True,
             ports={},  
