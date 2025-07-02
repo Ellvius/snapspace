@@ -20,7 +20,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_HOURS: int = 6 
     
+    # Container limits
     CONTAINER_LIFESPAN_HOURS: int = 3
+    MAX_PIDS: int = 400
 
     class Config:
         # Load environment variables from .env file

@@ -1,6 +1,8 @@
 from typing import List
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.models.containers import Container
+from app.config.settings import settings
 from app.schemas.container_schema import ContainerInsert, ContainerData, ContainerAction, ContainerStatus
 
 def get_container_by_id(container_id: str, db: Session) -> Container | None:
@@ -94,3 +96,13 @@ def verify_container_access(container_id: str, user_id: int, db: Session) -> Con
     if container.owner_id != user_id:
         raise PermissionError("User does not own this container")
     return container
+
+
+def enforce_pid_limit(user_id: int, new_pids: int, db: Session):
+    current_total = (
+        db.query(func.sum(Container.pids_limit))
+        .filter(Container.owner_id == user_id).scalar() or 0
+    )
+    
+    if current_total + new_pids > settings.MAX_PIDS:
+        raise ValueError(f"PID limit exceeded. Current: {current_total}, Requested: {new_pids}, Max: {settings.MAX_PIDS}, Try deleting existing environments.")

@@ -6,15 +6,30 @@ from sqlalchemy.orm import Session
 from app.schemas.user_schema import UserRoles, UserOut
 from app.utils.dock_net import get_new_dock_net
 from app.config.resource_profiles import resource_profiles
-from app.services.db.container_service import insert_container, update_container_status, delete_container, list_user_containers, verify_container_access
+from app.services.db.container_service import insert_container, update_container_status, delete_container, list_user_containers, verify_container_access, enforce_pid_limit
 from app.core.dependencies import get_db
 
 
 router = APIRouter(tags=["Development Environments"])
 
 
-@router.post("/", response_model=ContainerResponse)
-def create_environment(env : ContainerInput, user: UserOut = Depends(get_current_user), db: Session = Depends(get_db)):
+@router.post("/", response_model=dict)
+def create_environment(
+    env: ContainerInput, 
+    user: UserOut = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    # Check if user's total pids would exceed MAX_PIDS
+    env_pids = resource_profiles[env.profile]["pids_limit"]
+    try:
+        enforce_pid_limit(user.id, env_pids, db)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+
+     # Create Docker container
     env_network = get_new_dock_net()
     result = create_container(
         image_name=env.image, 
@@ -22,32 +37,38 @@ def create_environment(env : ContainerInput, user: UserOut = Depends(get_current
         subdomain=env.subdomain, 
         profile=env.profile
     )
-    
-    if result["status"] == "error":
+
+    if result.get("status") == "error":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
             detail=result["message"]
         )
-    
-    data = result["container"]
+
+    container_info = result["container"]
     container_data = ContainerInsert(
-        container_id=data["short_id"], # type: ignore
-        name=data["name"], # type: ignore
-        env=data["image"],   # type: ignore
-        network=data["container_network"], # type: ignore
-        pids_limit= resource_profiles[env.profile.value]["pids_limit"],
+        container_id=container_info["short_id"], # type: ignore
+        name=container_info["name"], # type: ignore
+        env=container_info["image"], # type: ignore
+        network=container_info["container_network"], # type: ignore
+        pids_limit=resource_profiles[env.profile.value]["pids_limit"],
         owner_id=user.id,
-        url= result["url"]
+        url=result["url"]
     )
     
-    res = insert_container(container_data, db)
-
-    if res is None:
+    try:
+        container = insert_container(container_data, db)
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail="Error creating environment"
+            detail=str(e)
         )
-    return res
+
+    return {
+        "status": "success",
+        "message": "Container created successfully",
+        "container": container,
+        "url": result["url"]
+    }
 
 
 @router.get("/", response_model=dict)
