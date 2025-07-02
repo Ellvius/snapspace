@@ -9,5 +9,5 @@ def generate_container_name() -> str:
 def generate_unique_suffix() -> str:
     return uuid.uuid4().hex[:12]  # take first 12 hex chars
     
-def generate_network() -> str:
+def generate_network_name() -> str:
     return uuid.uuid4().hex[:8]

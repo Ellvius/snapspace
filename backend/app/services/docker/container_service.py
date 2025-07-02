@@ -80,10 +80,14 @@ def list_containers(all: bool = True):
 def remove_container(container_id: str):
     try:
         container = client.containers.get(container_id)
+        # Get attached network names before removal
+        network = next(iter(container.attrs["NetworkSettings"]["Networks"]))
+        
         container.remove(force=True)
         return {
             "status": "success",
-            "message": f"Container '{container.name}' removed successfully."
+            "message": f"Container '{container.name}' removed successfully.",
+            "network": network
         }
     except docker.errors.NotFound:
         return {

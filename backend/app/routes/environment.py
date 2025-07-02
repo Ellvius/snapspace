@@ -4,11 +4,11 @@ from app.services.docker.container_service import (create_container, list_contai
 from app.core.dependencies import get_current_user, required_roles
 from sqlalchemy.orm import Session
 from app.schemas.user_schema import UserRoles, UserOut
-from app.utils.dock_net import get_new_dock_net
-from app.utils.generate_name import generate_container_name, generate_unique_suffix
+from app.utils.generate_name import generate_container_name, generate_unique_suffix, generate_network_name
 from app.config.resource_profiles import resource_profiles
 from app.services.db.container_service import insert_container, update_container_status, delete_container, list_user_containers, verify_container_access, enforce_pid_limit
 from app.core.dependencies import get_db
+from app.services.docker import network_service as dock_net
 
 
 router = APIRouter(tags=["Development Environments"])
@@ -30,15 +30,21 @@ def create_environment(
             detail=str(e)
         )
 
-     # Create Docker container
-    env_network = get_new_dock_net()
+    # Create an isolated network and attach it to traefik
+    container_network = generate_network_name()
+    network = dock_net.create_isolated_network(container_network)
+    dock_net.connect_traefik_to_network(container_network)
+    print(container_network)
+    
+    # Create a unique container name and env name
     container_name = generate_container_name()
     unique_hash = generate_unique_suffix()
     
+    # Create Docker container
     result = create_container(
         container_name=container_name,
         image_name=env.image, 
-        network_name=env_network,
+        network_name=container_network,
         subdomain=f"{container_name}-{unique_hash}", 
         profile=env.profile
     )
@@ -163,6 +169,13 @@ def delete_environment(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=result["message"]
         )
+        
+    try:
+        dock_net.delete_isolated_network(result["network"])
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     # Then, delete the container record from the database
     try:

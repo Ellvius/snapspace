@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 from app.services.docker.image_service import build_all_templates
 from app.services.docker import container_service as docker_svc
+from app.services.docker.network_service import delete_isolated_network
 from app.services.db.user_services import get_all_users, get_user_with_containers, delete_user_by_id
 from app.services.db import container_service as cont_svc
 from app.utils.paths import TEMPLATE_DIR
@@ -171,6 +172,13 @@ def delete_environment(container_id: str, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=result["message"]
         )
+        
+    try:
+        delete_isolated_network(result["network"])
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     # Then, delete the container record from the database
     try:
