@@ -1,5 +1,7 @@
+from typing import List
 from pydantic import BaseModel, ConfigDict
 from enum import Enum
+from app.schemas.container_schema import ContainerData
 
 class UserRoles(str, Enum):
     USER = "user"
@@ -16,4 +18,13 @@ class UserOut(BaseModel):
     username: str
     role: str
     
+    model_config = ConfigDict(from_attributes=True)
+    
+    
+class UserWithContainers(BaseModel):
+    id: int
+    username: str
+    role: str
+    containers: List[ContainerData] = []
+
     model_config = ConfigDict(from_attributes=True)
