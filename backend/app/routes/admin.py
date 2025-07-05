@@ -9,6 +9,7 @@ from app.utils.paths import TEMPLATE_DIR
 from app.core.dependencies import required_roles, get_db
 from app.schemas.user_schema import UserRoles
 from app.schemas.container_schema import ContainerAction
+from jobs.docker_jobs import prune_container_less_networks
 
 router = APIRouter(
     tags=["Admin"],
@@ -205,3 +206,15 @@ def fetch_logs(container_id: str, tail: int = 100):
             detail=result["message"]
         )
     return result
+
+
+@router.post("/prune-networks")
+def manual_network_prune():
+    try:
+        result = prune_container_less_networks()
+        return result
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=str(e)
+        )

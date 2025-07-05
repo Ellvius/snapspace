@@ -5,19 +5,25 @@ from app.routes import environment, admin, user, auth
 from app.core.db import Base, engine
 from app.config.settings import settings
 from app.core.admin_setup import create_admin
+from app.utils.logger import setup_logger
+from jobs import scheduler as sched
+
+logger = setup_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         Base.metadata.create_all(bind=engine)
+        logger.info("Database Tables Intialized.")
         create_admin()
+        logger.info("Admin user created.")
+        sched.start_scheduler()
     except Exception as e:
-        print(f" Startup failed: {e}")
+        logger.exception("Startup failed during initialization.")
         raise
-    else:
-        print("Tables created and admin check done.")
     yield
-    print("Application shutdown")
+    sched.shutdown_scheduler()
+    logger.info("Shutdown complete: Scheduler stopped.")
 
 
 # Initialize the Fastapi App with lifespan management

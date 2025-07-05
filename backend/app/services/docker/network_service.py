@@ -1,6 +1,7 @@
 from docker.errors import NotFound, APIError
 from docker.models.networks import Network
 from app.core.docker_config import client
+from app.config.settings import settings
 
 def create_isolated_network(network_name: str) -> Network:
     return client.networks.create(
@@ -9,7 +10,7 @@ def create_isolated_network(network_name: str) -> Network:
         attachable=True
     )
 
-def connect_traefik_to_network(network_name: str, traefik_container_name: str = "snapspace-traefik"):
+def connect_traefik_to_network(network_name: str, traefik_container_name: str = settings.TRAEFIK_CONTAINER_NAME):
     try:
         network = client.networks.get(network_name)
         container = client.containers.get(traefik_container_name)

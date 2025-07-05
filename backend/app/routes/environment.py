@@ -34,7 +34,7 @@ def create_environment(
     container_network = generate_network_name()
     network = dock_net.create_isolated_network(container_network)
     dock_net.connect_traefik_to_network(container_network)
-    print(container_network)
+    # print(container_network)
     
     # Create a unique container name and env name
     container_name = generate_container_name()
