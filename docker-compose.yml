@@ -1,11 +1,11 @@
-version: '3.8'
+name: ${PROJECT_TITLE:-snapspace}
 
 services:
   backend:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ${PROJECT_TITLE:-snapspace}-backend
+    container_name: ${COMPOSE_PROJECT_NAME}-backend
     working_dir: /app/backend
     labels:
       - "traefik.enable=true"
@@ -26,7 +26,7 @@ services:
 
   db:
     image: postgres:15-alpine
-    container_name: ${PROJECT_TITLE:-snapspace}-db
+    container_name: ${COMPOSE_PROJECT_NAME}-db
     environment:
       POSTGRES_USER: ${DB_USER:-user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
@@ -44,10 +44,10 @@ services:
 
   traefik:
     image: traefik:v3.0.4
-    container_name: ${PROJECT_TITLE:-snapspace}-traefik
+    container_name: ${COMPOSE_PROJECT_NAME}-traefik
     command:
       - --log.level=${TRAEFIK_LOG_LEVEL:-INFO}
-      - --providers.docker.network=${PROJECT_TITLE:-snapspace}-net
+      - --providers.docker.network=${COMPOSE_PROJECT_NAME}-net
     ports:
       - "80:80"
       - "8080:8080" # Dashboard
@@ -61,8 +61,8 @@ services:
 networks:
   app-network:
     driver: bridge
-    name: ${PROJECT_TITLE:-snapspace}-net
+    name: ${COMPOSE_PROJECT_NAME}-net
 
 volumes:
   postgres_data:
-    name: ${PROJECT_TITLE:-snapspace}-data
+    name: ${COMPOSE_PROJECT_NAME}-data
