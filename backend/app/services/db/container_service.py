@@ -125,3 +125,22 @@ def get_all_containers(db: Session) -> List[ContainerData]:
     except Exception as e:
         db.rollback()
         raise ValueError(f"Failed to fetch containers: {e}")
+    
+    
+def delete_container_network(network_name: str | None, db: Session) -> ContainerData:
+    if not network_name:
+        raise ValueError("Network name must be provided.")
+    
+    # Search for the container having the network
+    container = db.query(Container).filter(Container.network == network_name).first()
+    if not container:
+        raise ValueError(f"Container with network {network_name} not found.")
+    
+    try:
+        # Delete the container entry with the given network
+        db.delete(container)
+        db.commit()
+        return ContainerData.model_validate(container)
+    except Exception as e:
+        db.rollback()
+        raise ValueError(f"Failed to delete container network {network_name}: {e}")
