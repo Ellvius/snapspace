@@ -10,7 +10,7 @@ def create_isolated_network(network_name: str) -> Network:
         attachable=True
     )
 
-def connect_traefik_to_network(network_name: str, traefik_container_name: str = settings.TRAEFIK_CONTAINER_NAME):
+def connect_traefik_to_network(network_name: str, traefik_container_name: str = f"{settings.PROJECT_TITLE}-traefik"):
     try:
         network = client.networks.get(network_name)
         container = client.containers.get(traefik_container_name)

@@ -28,7 +28,7 @@ def prune_container_less_networks() -> dict:
             container = connected_containers[0]
             container.reload()
             
-            if container.name == settings.TRAEFIK_CONTAINER_NAME and container.status == "running":
+            if container.name == f"{settings.PROJECT_TITLE}-traefik" and container.status == "running":
                 logger.info(f"Found unused network: {network.name}")
                 
                 try:

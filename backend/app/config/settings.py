@@ -23,13 +23,12 @@ class Settings(BaseSettings):
     # Container limits
     CONTAINER_LIFESPAN_HOURS: int = 3
     MAX_PIDS: int = 400
-    TRAEFIK_CONTAINER_NAME: str = "snapspace-traefik"
 
     class Config:
         # Load environment variables from .env file
         env_file = BASE_DIR / '.env'
         env_file_encoding = "utf-8"
-        extra = "forbid" # Raise error on extra fields in .env
+        extra = "ignore"
 
 
 # Global settings instance
